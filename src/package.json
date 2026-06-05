@@ -1,0 +1,21 @@
+{
+  "name": "lambda-kronos-auth",
+  "version": "1.0.0",
+  "description": "Lambda de autenticación - Sistema Kronos",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"No tests\" && exit 0"
+  },
+  "dependencies": {
+    "mysql2": "^3.19.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.108",
+    "@types/node": "^20.12.7",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.6",
+    "typescript": "^5.0.0"
+  }
+}

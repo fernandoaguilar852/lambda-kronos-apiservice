@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda de autenticación - Sistema Kronos
+
+Resources:
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: lambda-kronos-auth
+      CodeUri: src/
+      Description: 'Lambda de autenticación JWT para Kronos'
+      MemorySize: 256
+      Timeout: 30
+      Handler: app.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          MYSQL_HOST: kronos-app.ctiw48myq04p.us-east-1.rds.amazonaws.com
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: KratosMilo123**
+          MYSQL_DATABASE: kronos-app
+          NODE_ENVIRONMENT: DEV
+          JWT_SECRET: ''
+          JWT_EXPIRES_IN: '30d'
+      LoggingConfig:
+        LogFormat: JSON
+        ApplicationLogLevel: ERROR
+        SystemLogLevel: WARN
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+              Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-kronos-auth:*'
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            Path: /v1/fsm/auth/login
+            Method: POST
+        Logout:
+          Type: Api
+          Properties:
+            Path: /v1/fsm/auth/logout
+            Method: POST
+        Refresh:
+          Type: Api
+          Properties:
+            Path: /v1/fsm/auth/refresh
+            Method: POST
+        RegisterFcm:
+          Type: Api
+          Properties:
+            Path: /v1/fsm/auth/register-fcm
+            Method: POST
+    Metadata:
+      BuildMethod: makefile
+
+Outputs:
+  AuthFunctionArn:
+    Value: !GetAtt AuthFunction.Arn
