@@ -5,6 +5,8 @@ import {
     RefreshRequestDTO,
     RefreshResponseDTO,
     RegisterFcmRequestDTO,
+    RegisterRequestDTO,
+    RegisterResponseDTO,
 } from '../repositories/dtos/AuthDTO';
 
 export interface IAuthBL {
@@ -29,4 +31,12 @@ export interface IAuthBL {
      * Inserta o actualiza el FCM token del usuario para notificaciones push.
      */
     registerFcm(dto: RegisterFcmRequestDTO): Promise<void>;
+
+    /**
+     * Registra una nueva empresa con su usuario administrador inicial.
+     * Crea en una sola transacción: company + subscription (TRIAL 30d) +
+     * company_settings (defaults) + catálogos base + user (COMPANY_ADMIN).
+     * Retorna JWT listo para auto-login.
+     */
+    registerCompany(dto: RegisterRequestDTO): Promise<RegisterResponseDTO>;
 }

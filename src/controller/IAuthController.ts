@@ -4,6 +4,7 @@ import {
     LogoutRequestDTO,
     RefreshRequestDTO,
     RegisterFcmRequestDTO,
+    RegisterRequestDTO,
 } from '../repositories/dtos/AuthDTO';
 
 export interface IAuthController {
@@ -11,4 +12,5 @@ export interface IAuthController {
     logout(body: LogoutRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult>;
     refresh(body: RefreshRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult>;
     registerFcm(body: RegisterFcmRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult>;
+    registerCompany(body: RegisterRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult>;
 }

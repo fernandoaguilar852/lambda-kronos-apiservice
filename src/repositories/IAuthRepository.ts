@@ -1,4 +1,4 @@
-import { UserRowDTO } from './dtos/AuthDTO';
+import { UserRowDTO, RegisterRequestDTO, RegisterResponseDTO } from './dtos/AuthDTO';
 
 export interface IAuthRepository {
     /**
@@ -21,4 +21,17 @@ export interface IAuthRepository {
      * Inserta o actualiza el FCM token del usuario en user_fcm_tokens.
      */
     upsertFcmToken(userId: number, token: string): Promise<void>;
+
+    /**
+     * Registra una nueva empresa con su usuario administrador.
+     * Ejecuta la transacción completa: company + subscription + settings + user.
+     * Retorna los IDs y UUIDs generados para construir el JWT.
+     */
+    registerCompany(dto: RegisterRequestDTO, passwordHash: string): Promise<{
+        companyId:   number;
+        companyUuid: string;
+        appId:       string;
+        userId:      number;
+        userUuid:    string;
+    }>;
 }

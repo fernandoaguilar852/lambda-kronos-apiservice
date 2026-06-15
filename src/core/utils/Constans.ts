@@ -84,7 +84,7 @@ export const ERROR_QUERY_EXCEPTION_MESSAGE = 'The database query has fail';
 // ===========================
 export enum ALLOWED_HEADERS_VALUES {
     CONTENT_TYPE = 'application/json',
-    ALLOWED_HEADERS = 'Content-Type,message-uuid,request-app-id,user-id,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+    ALLOWED_HEADERS = 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
     ALLOW_ORIGIN = '*',
     ALLOWED_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
 }
@@ -124,4 +124,26 @@ export const AUTH_QUERIES = {
     UPDATE_SESSION_TOKEN: `UPDATE users SET current_session_token = ?, updated_at = NOW() WHERE id = ?`,
     CLEAR_SESSION_TOKEN: `UPDATE users SET current_session_token = NULL, updated_at = NOW() WHERE id = ?`,
     UPSERT_FCM_TOKEN: `INSERT INTO user_fcm_tokens (user_id, token) VALUES (?, ?) ON DUPLICATE KEY UPDATE token = VALUES(token)`,
+
+    // ── Registro inicial de empresa ───────────────────────────────────────
+    CHECK_EMAIL_EXISTS:  `SELECT id FROM users WHERE email = ? LIMIT 1`,
+    CHECK_NIT_EXISTS:    `SELECT id FROM companies WHERE nit = ? LIMIT 1`,
+
+    INSERT_COMPANY: `
+        INSERT INTO companies (uuid, name, nit, contact_email, message_uuid, app_id)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+
+    INSERT_SUBSCRIPTION: `
+        INSERT INTO subscriptions (uuid, company_id, plan_id, status, current_period_start, current_period_end)
+        VALUES (?, ?, NULL, 'TRIAL', NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))`,
+
+    INSERT_COMPANY_SETTINGS: `
+        INSERT INTO company_settings (company_id) VALUES (?)`,
+
+    INSERT_USER: `
+        INSERT INTO users (uuid, company_id, role, first_name, last_name, email, phone, password, is_active)
+        VALUES (?, ?, 'COMPANY_ADMIN', ?, ?, ?, ?, ?, 1)`,
+
+    // Nota: work_order_types y work_order_statuses son catálogos GLOBALES
+    // (no tienen company_id). Se seedean una sola vez en el setup de la BD.
 };

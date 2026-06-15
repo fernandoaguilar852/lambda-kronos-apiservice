@@ -1,8 +1,9 @@
+import crypto from 'crypto';
 import { mysqlClient } from '../core/utils/DatabaseManager';
 import { AUTH_QUERIES } from '../core/utils/Constans';
 import { QueryFailException } from '../core/common/QueryFailException';
 import { IAuthRepository } from './IAuthRepository';
-import { UserRowDTO } from './dtos/AuthDTO';
+import { UserRowDTO, RegisterRequestDTO } from './dtos/AuthDTO';
 
 export class AuthRepository implements IAuthRepository {
 
@@ -50,6 +51,85 @@ export class AuthRepository implements IAuthRepository {
         } catch (error) {
             console.error('AuthRepository.upsertFcmToken error:', error);
             throw new QueryFailException('Error al registrar FCM token');
+        } finally {
+            connection.release();
+        }
+    }
+
+    async registerCompany(
+        dto: RegisterRequestDTO,
+        passwordHash: string
+    ): Promise<{ companyId: number; companyUuid: string; appId: string; userId: number; userUuid: string }> {
+        const connection = await mysqlClient.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // UUIDs generados server-side
+            const companyUuid   = crypto.randomUUID();
+            const appId         = crypto.randomUUID();
+            const messageUuid   = crypto.randomUUID();
+            const subUuid       = crypto.randomUUID();
+            const userUuid      = crypto.randomUUID();
+
+            const nit = dto.company.taxId?.trim() || null;
+
+            // 1. Verificar unicidad de email
+            const [emailRows]: any = await connection.query(AUTH_QUERIES.CHECK_EMAIL_EXISTS, [dto.admin.email.trim().toLowerCase()]);
+            if (emailRows.length > 0) {
+                await connection.rollback();
+                const err: any = new Error('El correo electrónico ya está registrado');
+                err.code = 'EMAIL_EXISTS';
+                throw err;
+            }
+
+            // 2. Verificar unicidad de NIT (solo si se proporcionó)
+            if (nit) {
+                const [nitRows]: any = await connection.query(AUTH_QUERIES.CHECK_NIT_EXISTS, [nit]);
+                if (nitRows.length > 0) {
+                    await connection.rollback();
+                    const err: any = new Error('El NIT ya está registrado en el sistema');
+                    err.code = 'NIT_EXISTS';
+                    throw err;
+                }
+            }
+
+            // 3. Crear empresa
+            const [companyResult]: any = await connection.query(AUTH_QUERIES.INSERT_COMPANY, [
+                companyUuid,
+                dto.company.name.trim(),
+                nit,
+                dto.admin.email.trim().toLowerCase(),
+                messageUuid,
+                appId,
+            ]);
+            const companyId = companyResult.insertId as number;
+
+            // 4. Crear suscripción TRIAL (30 días)
+            await connection.query(AUTH_QUERIES.INSERT_SUBSCRIPTION, [subUuid, companyId]);
+
+            // 5. Crear configuración por defecto de la empresa
+            await connection.query(AUTH_QUERIES.INSERT_COMPANY_SETTINGS, [companyId]);
+
+            // 6. Crear usuario administrador
+            const [userResult]: any = await connection.query(AUTH_QUERIES.INSERT_USER, [
+                userUuid,
+                companyId,
+                dto.admin.firstName.trim(),
+                dto.admin.lastName.trim(),
+                dto.admin.email.trim().toLowerCase(),
+                dto.admin.phone?.trim() || null,
+                passwordHash,
+            ]);
+            const userId = userResult.insertId as number;
+
+            await connection.commit();
+
+            return { companyId, companyUuid, appId, userId, userUuid };
+        } catch (error: any) {
+            await connection.rollback().catch(() => {});
+            if (error.code === 'EMAIL_EXISTS' || error.code === 'NIT_EXISTS') throw error;
+            console.error('AuthRepository.registerCompany error:', error);
+            throw new QueryFailException('Error al registrar la empresa');
         } finally {
             connection.release();
         }

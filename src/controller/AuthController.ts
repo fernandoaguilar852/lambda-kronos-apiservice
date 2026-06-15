@@ -9,6 +9,7 @@ import {
     LogoutRequestDTO,
     RefreshRequestDTO,
     RegisterFcmRequestDTO,
+    RegisterRequestDTO,
 } from '../repositories/dtos/AuthDTO';
 
 const CORS_HEADERS = {
@@ -96,6 +97,25 @@ export class AuthController implements IAuthController {
             }
             console.error('AuthController.registerFcm error:', err);
             return errorResp(HttpStatus.INTERNAL_SERVER_ERROR, messageUuid, requestAppId, 'Error interno al registrar FCM token');
+        }
+    }
+
+    async registerCompany(body: RegisterRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult> {
+        try {
+            const result = await this.bl.registerCompany(body);
+            return successResp(
+                HttpStatus.CREATED,
+                result,
+                messageUuid,
+                requestAppId,
+                '¡Empresa registrada exitosamente! Bienvenido a Kronos.'
+            );
+        } catch (err: any) {
+            if (err instanceof ValidationError) {
+                return errorResp(HttpStatus.BAD_REQUEST, messageUuid, requestAppId, err.message);
+            }
+            console.error('AuthController.registerCompany error:', err);
+            return errorResp(HttpStatus.INTERNAL_SERVER_ERROR, messageUuid, requestAppId, 'Error interno al registrar la empresa');
         }
     }
 }
