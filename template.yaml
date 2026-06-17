@@ -67,3 +67,6 @@ Resources:
 Outputs:
   AuthFunctionArn:
     Value: !GetAtt AuthFunction.Arn
+  ApiGatewayUrl:
+    Description: URL del API Gateway para Work Order Statuses
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
