@@ -41,26 +41,16 @@ Resources:
               Resource:
                 - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-kronos-auth:*'
       Events:
-        Login:
+        ApiProxy:
           Type: Api
           Properties:
-            Path: /v1/fsm/auth/login
-            Method: POST
-        Logout:
+            Path: /v1/fsm/auth/{proxy+}
+            Method: any
+        ApiRoot:
           Type: Api
           Properties:
-            Path: /v1/fsm/auth/logout
-            Method: POST
-        Refresh:
-          Type: Api
-          Properties:
-            Path: /v1/fsm/auth/refresh
-            Method: POST
-        RegisterFcm:
-          Type: Api
-          Properties:
-            Path: /v1/fsm/auth/register-fcm
-            Method: POST
+            Path: /v1/fsm/auth
+            Method: any
     Metadata:
       BuildMethod: makefile
 
