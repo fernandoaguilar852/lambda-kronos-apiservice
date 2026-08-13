@@ -23,6 +23,12 @@ export interface IAuthRepository {
     upsertFcmToken(userId: number, token: string): Promise<void>;
 
     /**
+     * RN-CLI-01: Verifica que el cliente tenga al menos 1 contrato ACTIVE.
+     * Solo relevante para usuarios con rol CLIENT_USER.
+     */
+    clientHasActiveContract(clientId: number): Promise<boolean>;
+
+    /**
      * Registra una nueva empresa con su usuario administrador.
      * Ejecuta la transacción completa: company + subscription + settings + user.
      * Retorna los IDs y UUIDs generados para construir el JWT.

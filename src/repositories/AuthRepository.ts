@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { RowDataPacket } from 'mysql2/promise';
 import { mysqlClient } from '../core/utils/DatabaseManager';
 import { AUTH_QUERIES } from '../core/utils/Constans';
 import { QueryFailException } from '../core/common/QueryFailException';
@@ -51,6 +52,23 @@ export class AuthRepository implements IAuthRepository {
         } catch (error) {
             console.error('AuthRepository.upsertFcmToken error:', error);
             throw new QueryFailException('Error al registrar FCM token');
+        } finally {
+            connection.release();
+        }
+    }
+
+    /** RN-CLI-01: verifica que el cliente tenga al menos 1 contrato ACTIVE */
+    async clientHasActiveContract(clientId: number): Promise<boolean> {
+        const connection = await mysqlClient.getConnection();
+        try {
+            const [rows] = await connection.query<RowDataPacket[]>(
+                AUTH_QUERIES.CHECK_CLIENT_ACTIVE_CONTRACT,
+                [clientId]
+            );
+            return rows.length > 0;
+        } catch (error) {
+            console.error('AuthRepository.clientHasActiveContract error:', error);
+            return false; // en caso de error de BD no bloqueamos el login
         } finally {
             connection.release();
         }
