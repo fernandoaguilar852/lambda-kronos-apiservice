@@ -128,8 +128,9 @@ export const AUTH_QUERIES = {
     // RN-CLI-01: Un CLIENT_USER solo puede iniciar sesión si su cliente tiene al menos 1 contrato no INACTIVE
     // Retrocompatible: contratos DRAFT también cuentan (los contratos existentes pueden estar en DRAFT)
     CHECK_CLIENT_ACTIVE_CONTRACT: `
-        SELECT id FROM contracts
-        WHERE client_id = ? AND status != 'INACTIVE'
+        SELECT cc.id FROM client_contracts cc
+        JOIN contracts co ON co.id = cc.contract_id
+        WHERE cc.client_id = ? AND co.status != 'INACTIVE'
         LIMIT 1
     `,
 
