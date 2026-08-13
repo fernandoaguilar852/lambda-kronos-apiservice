@@ -125,6 +125,13 @@ export const AUTH_QUERIES = {
     CLEAR_SESSION_TOKEN: `UPDATE users SET current_session_token = NULL, updated_at = NOW() WHERE id = ?`,
     UPSERT_FCM_TOKEN: `INSERT INTO user_fcm_tokens (user_id, token) VALUES (?, ?) ON DUPLICATE KEY UPDATE token = VALUES(token)`,
 
+    // RN-CLI-01: Un CLIENT_USER solo puede iniciar sesión si su cliente tiene al menos 1 contrato ACTIVE
+    CHECK_CLIENT_ACTIVE_CONTRACT: `
+        SELECT id FROM contracts
+        WHERE client_id = ? AND status = 'ACTIVE'
+        LIMIT 1
+    `,
+
     // ── Registro inicial de empresa ───────────────────────────────────────
     CHECK_EMAIL_EXISTS:  `SELECT id FROM users WHERE email = ? LIMIT 1`,
     CHECK_NIT_EXISTS:    `SELECT id FROM companies WHERE nit = ? LIMIT 1`,

@@ -59,6 +59,14 @@ export class AuthBL implements IAuthBL {
             throw new ValidationError('Credenciales inválidas');
         }
 
+        // RN-CLI-01: CLIENT_USER solo puede iniciar sesión si su cliente tiene contrato activo
+        if (user.role === 'CLIENT_USER' && user.client_id) {
+            const hasContract = await this.repo.clientHasActiveContract(user.client_id);
+            if (!hasContract) {
+                throw new ValidationError('Su cliente no tiene contratos activos. Contacte a su proveedor de servicios.');
+            }
+        }
+
         const payload = {
             sub:       user.id,
             uuid:      user.uuid,
