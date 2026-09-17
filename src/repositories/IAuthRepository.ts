@@ -1,4 +1,12 @@
-import { UserRowDTO, RegisterRequestDTO, RegisterResponseDTO } from './dtos/AuthDTO';
+import {
+    UserRowDTO,
+    RegisterRequestDTO,
+    RegisterResponseDTO,
+    GetWorkOrdersRequestDTO,
+    GetWorkOrdersResponseDTO,
+    GetWorkOrderByIdRequestDTO,
+    WorkOrderDetailDTO,
+} from './dtos/AuthDTO';
 
 export interface IAuthRepository {
     /**
@@ -51,4 +59,17 @@ export interface IAuthRepository {
         userId:      number;
         userUuid:    string;
     }>;
+
+    /**
+     * Obtiene work orders paginadas filtradas por companyId (multi-tenancy).
+     * El companyId viene del JWT - garantiza que solo se retornan work orders de la empresa del usuario.
+     */
+    getWorkOrders(dto: GetWorkOrdersRequestDTO): Promise<GetWorkOrdersResponseDTO>;
+
+    /**
+     * Obtiene una work order específica por ID filtrada por companyId (multi-tenancy).
+     * El companyId viene del JWT - garantiza que solo se retorna si pertenece a la empresa del usuario.
+     * Retorna null si la work order no existe o no pertenece al companyId.
+     */
+    getWorkOrderById(dto: GetWorkOrderByIdRequestDTO): Promise<WorkOrderDetailDTO | null>;
 }

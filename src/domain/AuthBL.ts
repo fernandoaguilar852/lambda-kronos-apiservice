@@ -13,6 +13,10 @@ import {
     RegisterResponseDTO,
     AuthUserResponseDTO,
     UserRowDTO,
+    GetWorkOrdersRequestDTO,
+    GetWorkOrdersResponseDTO,
+    GetWorkOrderByIdRequestDTO,
+    WorkOrderDetailDTO,
 } from '../repositories/dtos/AuthDTO';
 import { ValidationError } from '../core/common/QueryFailException';
 
@@ -248,5 +252,41 @@ export class AuthBL implements IAuthBL {
                 appId: result.appId,
             },
         };
+    }
+
+    async getWorkOrders(dto: GetWorkOrdersRequestDTO): Promise<GetWorkOrdersResponseDTO> {
+        // Validar parámetros de paginación
+        if (!dto.pageNumber || dto.pageNumber < 1) {
+            throw new ValidationError('pageNumber debe ser mayor o igual a 1');
+        }
+        if (!dto.pageSize || dto.pageSize < 1) {
+            throw new ValidationError('pageSize debe ser mayor o igual a 1');
+        }
+        if (dto.pageSize > 100) {
+            throw new ValidationError('pageSize no puede ser mayor a 100');
+        }
+        if (!dto.companyId) {
+            throw new ValidationError('companyId es requerido (extraído del JWT)');
+        }
+
+        return this.repo.getWorkOrders(dto);
+    }
+
+    async getWorkOrderById(dto: GetWorkOrderByIdRequestDTO): Promise<WorkOrderDetailDTO> {
+        // Validar parámetros
+        if (!dto.workOrderId || dto.workOrderId < 1) {
+            throw new ValidationError('workOrderId debe ser un número válido mayor a 0');
+        }
+        if (!dto.companyId) {
+            throw new ValidationError('companyId es requerido (extraído del JWT)');
+        }
+
+        const workOrder = await this.repo.getWorkOrderById(dto);
+
+        if (!workOrder) {
+            throw new ValidationError('Work order no encontrada o no pertenece a su empresa');
+        }
+
+        return workOrder;
     }
 }

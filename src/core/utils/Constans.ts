@@ -183,4 +183,167 @@ export const AUTH_QUERIES = {
 
     // Nota: work_order_types y work_order_statuses son catálogos GLOBALES
     // (no tienen company_id). Se seedean una sola vez en el setup de la BD.
+
+    // ── Work Orders External API ──────────────────────────────────────────
+
+    /**
+     * Obtiene work orders con paginación, filtrado por company_id (multi-tenancy).
+     * Incluye todos los datos relacionados mediante LEFT JOINs.
+     */
+    GET_WORK_ORDERS_PAGINATED: `
+        SELECT
+            wo.id,
+            wo.uuid,
+            wo.company_id AS companyId,
+            comp.name AS companyName,
+
+            cl.id AS client_id,
+            cl.uuid AS client_uuid,
+            cl.name AS client_name,
+            cl.nit AS client_nit,
+            cl.address AS client_address,
+
+            tech.id AS technician_id,
+            tech.uuid AS technician_uuid,
+            CONCAT(tech.first_name, ' ', tech.last_name) AS technician_fullName,
+
+            wo.assignment_type AS assignmentType,
+            wo.origin,
+
+            cont.id AS contract_id,
+            cont.name AS contract_name,
+
+            wo.site_id AS siteId,
+            site.name AS siteName,
+
+            ci.id AS contractItem_id,
+            ci.name AS contractItem_name,
+
+            ct.id AS checklistTemplate_id,
+            ct.name AS checklistTemplate_name,
+
+            wo.final_cost AS finalCost,
+            wo.parent_work_order_id AS parentWorkOrderId,
+
+            wot.id AS workOrderType_id,
+            wot.uuid AS workOrderType_uuid,
+            wot.name AS workOrderType_name,
+
+            wos.id AS workOrderStatus_id,
+            wos.uuid AS workOrderStatus_uuid,
+            wos.name AS workOrderStatus_name,
+            wos.color AS workOrderStatus_color,
+            wos.is_final AS workOrderStatus_isFinal,
+
+            wo.scheduled_date AS scheduledDate,
+            wo.scheduled_end AS scheduledEnd,
+            wo.execution_start AS executionStart,
+            wo.execution_end AS executionEnd,
+            wo.client_signature_url AS clientSignatureUrl,
+            wo.invoice_url AS invoiceUrl,
+            wo.report_url AS reportUrl,
+            wo.observations,
+            wo.description,
+            wo.can_reopen AS canReopen,
+            wo.created_at AS createdAt,
+            wo.updated_at AS updatedAt
+
+        FROM work_orders wo
+        INNER JOIN companies comp ON wo.company_id = comp.id
+        INNER JOIN clients cl ON wo.client_id = cl.id
+        LEFT JOIN users tech ON wo.technician_id = tech.id
+        LEFT JOIN contracts cont ON wo.contract_id = cont.id
+        LEFT JOIN sites site ON wo.site_id = site.id
+        LEFT JOIN contract_items ci ON wo.contract_item_id = ci.id
+        LEFT JOIN checklist_templates ct ON wo.checklist_template_id = ct.id
+        INNER JOIN work_order_types wot ON wo.work_order_type_id = wot.id
+        INNER JOIN work_order_statuses wos ON wo.work_order_status_id = wos.id
+        WHERE wo.company_id = ?
+        ORDER BY wo.created_at DESC
+        LIMIT ? OFFSET ?
+    `,
+
+    /**
+     * Cuenta el total de work orders para una empresa (multi-tenancy).
+     */
+    COUNT_WORK_ORDERS_BY_COMPANY: `
+        SELECT COUNT(*) AS total
+        FROM work_orders wo
+        WHERE wo.company_id = ?
+    `,
+
+    /**
+     * Obtiene una work order específica por ID y companyId (multi-tenancy).
+     * NO incluye clientSignatureUrl en el resultado.
+     */
+    GET_WORK_ORDER_BY_ID: `
+        SELECT
+            wo.id,
+            wo.uuid,
+            wo.company_id AS companyId,
+            comp.name AS companyName,
+
+            cl.id AS client_id,
+            cl.uuid AS client_uuid,
+            cl.name AS client_name,
+            cl.nit AS client_nit,
+            cl.address AS client_address,
+
+            tech.id AS technician_id,
+            tech.uuid AS technician_uuid,
+            CONCAT(tech.first_name, ' ', tech.last_name) AS technician_fullName,
+
+            wo.assignment_type AS assignmentType,
+            wo.origin,
+
+            cont.id AS contract_id,
+            cont.name AS contract_name,
+
+            wo.site_id AS siteId,
+            site.name AS siteName,
+
+            ci.id AS contractItem_id,
+            ci.name AS contractItem_name,
+
+            ct.id AS checklistTemplate_id,
+            ct.name AS checklistTemplate_name,
+
+            wo.final_cost AS finalCost,
+            wo.parent_work_order_id AS parentWorkOrderId,
+
+            wot.id AS workOrderType_id,
+            wot.uuid AS workOrderType_uuid,
+            wot.name AS workOrderType_name,
+
+            wos.id AS workOrderStatus_id,
+            wos.uuid AS workOrderStatus_uuid,
+            wos.name AS workOrderStatus_name,
+            wos.color AS workOrderStatus_color,
+            wos.is_final AS workOrderStatus_isFinal,
+
+            wo.scheduled_date AS scheduledDate,
+            wo.scheduled_end AS scheduledEnd,
+            wo.execution_start AS executionStart,
+            wo.execution_end AS executionEnd,
+            wo.invoice_url AS invoiceUrl,
+            wo.report_url AS reportUrl,
+            wo.observations,
+            wo.description,
+            wo.can_reopen AS canReopen,
+            wo.created_at AS createdAt,
+            wo.updated_at AS updatedAt
+
+        FROM work_orders wo
+        INNER JOIN companies comp ON wo.company_id = comp.id
+        INNER JOIN clients cl ON wo.client_id = cl.id
+        LEFT JOIN users tech ON wo.technician_id = tech.id
+        LEFT JOIN contracts cont ON wo.contract_id = cont.id
+        LEFT JOIN sites site ON wo.site_id = site.id
+        LEFT JOIN contract_items ci ON wo.contract_item_id = ci.id
+        LEFT JOIN checklist_templates ct ON wo.checklist_template_id = ct.id
+        INNER JOIN work_order_types wot ON wo.work_order_type_id = wot.id
+        INNER JOIN work_order_statuses wos ON wo.work_order_status_id = wos.id
+        WHERE wo.id = ? AND wo.company_id = ?
+        LIMIT 1
+    `,
 };

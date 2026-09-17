@@ -7,6 +7,10 @@ import {
     RegisterFcmRequestDTO,
     RegisterRequestDTO,
     RegisterResponseDTO,
+    GetWorkOrdersRequestDTO,
+    GetWorkOrdersResponseDTO,
+    GetWorkOrderByIdRequestDTO,
+    WorkOrderDetailDTO,
 } from '../repositories/dtos/AuthDTO';
 
 export interface IAuthBL {
@@ -39,4 +43,16 @@ export interface IAuthBL {
      * Retorna JWT listo para auto-login.
      */
     registerCompany(dto: RegisterRequestDTO): Promise<RegisterResponseDTO>;
+
+    /**
+     * Obtiene work orders paginadas filtradas por companyId del JWT (multi-tenancy).
+     * Validaciones de paginación aplicadas.
+     */
+    getWorkOrders(dto: GetWorkOrdersRequestDTO): Promise<GetWorkOrdersResponseDTO>;
+
+    /**
+     * Obtiene una work order específica por ID filtrada por companyId del JWT (multi-tenancy).
+     * Lanza ValidationError si no existe o no pertenece a la empresa del usuario.
+     */
+    getWorkOrderById(dto: GetWorkOrderByIdRequestDTO): Promise<WorkOrderDetailDTO>;
 }

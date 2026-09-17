@@ -12,6 +12,8 @@ import {
     RefreshRequestDTO,
     RegisterFcmRequestDTO,
     RegisterRequestDTO,
+    GetWorkOrdersRequestDTO,
+    GetWorkOrderByIdRequestDTO,
 } from './repositories/dtos/AuthDTO';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -104,6 +106,43 @@ export const lambdaHandler = async (
             const body = JSON.parse(event.body || '{}') as RegisterFcmRequestDTO;
             body.userId = userId;
             return controller.registerFcm(body, requestId, requestAppId);
+        }
+
+        // ── GET /v1/fsm/external/work-orders ──────────────────────────────────
+        // Ruta PROTEGIDA — requiere JWT + query params pageNumber y pageSize OBLIGATORIOS
+        if (method === 'GET' && path === '/v1/fsm/external/work-orders') {
+            const queryParams = event.queryStringParameters || {};
+
+            // Validar query params obligatorios
+            if (!queryParams.pageNumber || !queryParams.pageSize) {
+                return errorResp(400, requestId, requestAppId, 'Query params obligatorios: pageNumber y pageSize');
+            }
+
+            const dto: GetWorkOrdersRequestDTO = {
+                pageNumber: parseInt(queryParams.pageNumber, 10),
+                pageSize: parseInt(queryParams.pageSize, 10),
+                companyId, // ⭐ Del JWT - garantiza multi-tenancy
+            };
+
+            return controller.getWorkOrders(dto, requestId, requestAppId);
+        }
+
+        // ── GET /v1/fsm/external/work-orders/{id} ─────────────────────────────────
+        // Ruta PROTEGIDA — requiere JWT + pathParameter id
+        if (method === 'GET' && path.startsWith('/v1/fsm/external/work-orders/')) {
+            const pathParts = path.split('/');
+            const workOrderId = parseInt(pathParts[pathParts.length - 1], 10);
+
+            if (isNaN(workOrderId) || workOrderId < 1) {
+                return errorResp(400, requestId, requestAppId, 'ID de work order inválido');
+            }
+
+            const dto: GetWorkOrderByIdRequestDTO = {
+                workOrderId,
+                companyId, // ⭐ Del JWT - garantiza multi-tenancy
+            };
+
+            return controller.getWorkOrderById(dto, requestId, requestAppId);
         }
 
         // 404

@@ -10,6 +10,8 @@ import {
     RefreshRequestDTO,
     RegisterFcmRequestDTO,
     RegisterRequestDTO,
+    GetWorkOrdersRequestDTO,
+    GetWorkOrderByIdRequestDTO,
 } from '../repositories/dtos/AuthDTO';
 
 const CORS_HEADERS = {
@@ -116,6 +118,44 @@ export class AuthController implements IAuthController {
             }
             console.error('AuthController.registerCompany error:', err);
             return errorResp(HttpStatus.INTERNAL_SERVER_ERROR, messageUuid, requestAppId, 'Error interno al registrar la empresa');
+        }
+    }
+
+    async getWorkOrders(dto: GetWorkOrdersRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult> {
+        try {
+            const result = await this.bl.getWorkOrders(dto);
+            return successResp(
+                HttpStatus.OK,
+                result,
+                messageUuid,
+                requestAppId,
+                'Work orders obtenidas exitosamente'
+            );
+        } catch (err: any) {
+            if (err instanceof ValidationError) {
+                return errorResp(HttpStatus.BAD_REQUEST, messageUuid, requestAppId, err.message);
+            }
+            console.error('AuthController.getWorkOrders error:', err);
+            return errorResp(HttpStatus.INTERNAL_SERVER_ERROR, messageUuid, requestAppId, 'Error interno al obtener work orders');
+        }
+    }
+
+    async getWorkOrderById(dto: GetWorkOrderByIdRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult> {
+        try {
+            const result = await this.bl.getWorkOrderById(dto);
+            return successResp(
+                HttpStatus.OK,
+                result,
+                messageUuid,
+                requestAppId,
+                'Work order obtenida exitosamente'
+            );
+        } catch (err: any) {
+            if (err instanceof ValidationError) {
+                return errorResp(HttpStatus.NOT_FOUND, messageUuid, requestAppId, err.message);
+            }
+            console.error('AuthController.getWorkOrderById error:', err);
+            return errorResp(HttpStatus.INTERNAL_SERVER_ERROR, messageUuid, requestAppId, 'Error interno al obtener work order');
         }
     }
 }

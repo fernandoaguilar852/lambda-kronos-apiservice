@@ -51,6 +51,11 @@ Resources:
           Properties:
             Path: /v1/fsm/auth
             Method: any
+        ExternalApiProxy:
+          Type: Api
+          Properties:
+            Path: /v1/fsm/external/{proxy+}
+            Method: any
     Metadata:
       BuildMethod: makefile
 

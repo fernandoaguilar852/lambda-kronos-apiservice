@@ -92,3 +92,137 @@ export interface RegisterResponseDTO {
         appId: string;   // UUID que el cliente puede usar en futuras integraciones
     };
 }
+
+// ── Work Orders External API ──────────────────────────────────────────────────
+
+export interface GetWorkOrdersRequestDTO {
+    pageNumber: number;
+    pageSize: number;
+    companyId: number;  // Extraído del JWT
+}
+
+export interface WorkOrderClientDTO {
+    id: number;
+    uuid: string;
+    name: string;
+    nit: string | null;
+    address: string | null;
+}
+
+export interface WorkOrderTechnicianDTO {
+    id: number;
+    uuid: string;
+    fullName: string;
+}
+
+export interface WorkOrderContractDTO {
+    id: number;
+    name: string;
+}
+
+export interface WorkOrderContractItemDTO {
+    id: number;
+    name: string;
+}
+
+export interface WorkOrderChecklistTemplateDTO {
+    id: number;
+    name: string;
+}
+
+export interface WorkOrderTypeDTO {
+    id: number;
+    uuid: string;
+    name: string;
+}
+
+export interface WorkOrderStatusDTO {
+    id: number;
+    uuid: string;
+    name: string;
+    color: string;
+    isFinal: boolean;
+}
+
+export interface WorkOrderDTO {
+    id: number;
+    uuid: string;
+    companyId: number;
+    companyName: string;
+    client: WorkOrderClientDTO;
+    technician: WorkOrderTechnicianDTO | null;
+    assignmentType: string;
+    origin: string;
+    contract: WorkOrderContractDTO | null;
+    siteId: number | null;
+    siteName: string | null;
+    contractItem: WorkOrderContractItemDTO | null;
+    checklistTemplate: WorkOrderChecklistTemplateDTO | null;
+    finalCost: number | null;
+    parentWorkOrderId: number | null;
+    workOrderType: WorkOrderTypeDTO;
+    workOrderStatus: WorkOrderStatusDTO;
+    scheduledDate: string | null;
+    scheduledEnd: string | null;
+    executionStart: string | null;
+    executionEnd: string | null;
+    clientSignatureUrl: string | null;
+    invoiceUrl: string | null;
+    reportUrl: string | null;
+    observations: string | null;
+    description: string | null;
+    canReopen: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PaginationDTO {
+    totalElement: number;
+    pageSize: number;
+    pageNumber: number;
+    hasMoreElements: boolean;
+}
+
+export interface GetWorkOrdersResponseDTO {
+    workOrders: WorkOrderDTO[];
+    pagination: PaginationDTO;
+}
+
+// ── Work Order Detail (by ID) ─────────────────────────────────────────────────
+
+export interface GetWorkOrderByIdRequestDTO {
+    workOrderId: number;
+    companyId: number;  // Extraído del JWT para multi-tenancy
+}
+
+export interface WorkOrderDetailDTO {
+    id: number;
+    uuid: string;
+    companyId: number;
+    companyName: string;
+    client: WorkOrderClientDTO;
+    technician: WorkOrderTechnicianDTO | null;
+    assignmentType: string;
+    origin: string;
+    contract: WorkOrderContractDTO | null;
+    siteId: number | null;
+    siteName: string | null;
+    contractItem: WorkOrderContractItemDTO | null;
+    checklistTemplate: WorkOrderChecklistTemplateDTO | null;
+    finalCost: number | null;
+    parentWorkOrderId: number | null;
+    workOrderType: WorkOrderTypeDTO;
+    workOrderStatus: WorkOrderStatusDTO;
+    scheduledDate: string | null;
+    scheduledEnd: string | null;
+    executionStart: string | null;
+    executionEnd: string | null;
+    // clientSignatureUrl NO incluido — solo en endpoint de listado
+    invoiceUrl: string | null;
+    reportUrl: string | null;
+    observations: string | null;
+    description: string | null;
+    canReopen: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
