@@ -10,7 +10,6 @@ import {
     LoginRequestDTO,
     LogoutRequestDTO,
     RefreshRequestDTO,
-    RegisterFcmRequestDTO,
     GetWorkOrdersRequestDTO,
     GetWorkOrderByIdRequestDTO,
 } from './repositories/dtos/AuthDTO';
@@ -91,13 +90,6 @@ export const lambdaHandler = async (
             const body = JSON.parse(event.body || '{}') as LogoutRequestDTO;
             body.userId = userId;
             return controller.logout(body, requestId, requestAppId);
-        }
-
-        // ── POST /v1/fsm/auth/register-fcm ───────────────────────────────────
-        if (method === 'POST' && path === '/v1/fsm/auth/register-fcm') {
-            const body = JSON.parse(event.body || '{}') as RegisterFcmRequestDTO;
-            body.userId = userId;
-            return controller.registerFcm(body, requestId, requestAppId);
         }
 
         // ── GET /v1/fsm/external/work-orders ──────────────────────────────────

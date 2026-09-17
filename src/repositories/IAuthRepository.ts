@@ -25,11 +25,6 @@ export interface IAuthRepository {
     clearSessionToken(userId: number): Promise<void>;
 
     /**
-     * Inserta o actualiza el FCM token del usuario en user_fcm_tokens.
-     */
-    upsertFcmToken(userId: number, token: string): Promise<void>;
-
-    /**
      * RN-CLI-01: Verifica que el cliente tenga al menos 1 contrato ACTIVE.
      * Solo relevante para usuarios con rol CLIENT_USER.
      */

@@ -51,18 +51,6 @@ export class AuthRepository implements IAuthRepository {
         }
     }
 
-    async upsertFcmToken(userId: number, token: string): Promise<void> {
-        const connection = await mysqlClient.getConnection();
-        try {
-            await connection.query(AUTH_QUERIES.UPSERT_FCM_TOKEN, [userId, token]);
-        } catch (error) {
-            console.error('AuthRepository.upsertFcmToken error:', error);
-            throw new QueryFailException('Error al registrar FCM token');
-        } finally {
-            connection.release();
-        }
-    }
-
     /** RN-CLI-01: verifica que el cliente tenga al menos 1 contrato ACTIVE */
     async clientHasActiveContract(clientId: number): Promise<boolean> {
         const connection = await mysqlClient.getConnection();

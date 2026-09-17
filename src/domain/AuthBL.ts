@@ -8,7 +8,6 @@ import {
     LogoutRequestDTO,
     RefreshRequestDTO,
     RefreshResponseDTO,
-    RegisterFcmRequestDTO,
     AuthUserResponseDTO,
     UserRowDTO,
     GetWorkOrdersRequestDTO,
@@ -162,13 +161,6 @@ export class AuthBL implements IAuthBL {
         );
 
         return { token: newToken, expiresIn: JWT_EXPIRES };
-    }
-
-    async registerFcm(dto: RegisterFcmRequestDTO): Promise<void> {
-        if (!dto.userId || !dto.token) {
-            throw new ValidationError('userId y token son requeridos');
-        }
-        await this.repo.upsertFcmToken(dto.userId, dto.token);
     }
 
     async getWorkOrders(dto: GetWorkOrdersRequestDTO): Promise<GetWorkOrdersResponseDTO> {

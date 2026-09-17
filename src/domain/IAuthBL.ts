@@ -4,7 +4,6 @@ import {
     LogoutRequestDTO,
     RefreshRequestDTO,
     RefreshResponseDTO,
-    RegisterFcmRequestDTO,
     GetWorkOrdersRequestDTO,
     GetWorkOrdersResponseDTO,
     GetWorkOrderByIdRequestDTO,
@@ -28,11 +27,6 @@ export interface IAuthBL {
      * Verifica el JWT recibido y, si es válido, emite un nuevo token.
      */
     refresh(dto: RefreshRequestDTO): Promise<RefreshResponseDTO>;
-
-    /**
-     * Inserta o actualiza el FCM token del usuario para notificaciones push.
-     */
-    registerFcm(dto: RegisterFcmRequestDTO): Promise<void>;
 
     /**
      * Obtiene work orders paginadas filtradas por companyId del JWT (multi-tenancy).

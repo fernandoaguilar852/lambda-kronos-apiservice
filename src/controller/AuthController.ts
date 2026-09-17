@@ -8,7 +8,6 @@ import {
     LoginRequestDTO,
     LogoutRequestDTO,
     RefreshRequestDTO,
-    RegisterFcmRequestDTO,
     GetWorkOrdersRequestDTO,
     GetWorkOrderByIdRequestDTO,
 } from '../repositories/dtos/AuthDTO';
@@ -85,19 +84,6 @@ export class AuthController implements IAuthController {
             }
             console.error('AuthController.refresh error:', err);
             return errorResp(HttpStatus.INTERNAL_SERVER_ERROR, messageUuid, requestAppId, 'Error interno al renovar token');
-        }
-    }
-
-    async registerFcm(body: RegisterFcmRequestDTO, messageUuid: string, requestAppId: string): Promise<APIGatewayProxyResult> {
-        try {
-            await this.bl.registerFcm(body);
-            return successResp(HttpStatus.OK, { success: true }, messageUuid, requestAppId, 'FCM token registrado exitosamente');
-        } catch (err: any) {
-            if (err instanceof ValidationError) {
-                return errorResp(HttpStatus.BAD_REQUEST, messageUuid, requestAppId, err.message);
-            }
-            console.error('AuthController.registerFcm error:', err);
-            return errorResp(HttpStatus.INTERNAL_SERVER_ERROR, messageUuid, requestAppId, 'Error interno al registrar FCM token');
         }
     }
 

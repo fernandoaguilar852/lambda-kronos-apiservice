@@ -13,11 +13,6 @@ export interface LogoutRequestDTO {
     userId: number;
 }
 
-export interface RegisterFcmRequestDTO {
-    userId: number;
-    token: string;
-}
-
 export interface UserRowDTO {
     id: number;
     uuid: string;
