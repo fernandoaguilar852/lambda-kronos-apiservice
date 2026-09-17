@@ -133,18 +133,46 @@ export class AuthBL implements IAuthBL {
             throw new ValidationError('Token no corresponde al usuario indicado');
         }
 
-        // Preservar todos los campos del JWT original, incluyendo los nuevos
+        // Consultar datos frescos del usuario desde la BD
+        const user = await this.repo.getUserByEmail(decoded.email);
+        if (!user) {
+            throw new ValidationError('Usuario no encontrado');
+        }
+
+        // RN-CLI-01: CLIENT_USER solo puede refrescar token si su cliente tiene contrato activo
+        if (user.role === 'CLIENT_USER' && user.client_id) {
+            const hasContract = await this.repo.clientHasActiveContract(user.client_id);
+            if (!hasContract) {
+                throw new ValidationError('Su cliente no tiene contratos activos. Contacte a su proveedor de servicios.');
+            }
+        }
+
+        // Obtener datos frescos de suscripción de la empresa
+        let usedApi = false;
+        let subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' = 'TRIAL';
+
+        if (user.company_id) {
+            try {
+                const subscriptionData = await this.repo.getSubscriptionFeatures(user.company_id);
+                usedApi = subscriptionData.usedApi;
+                subscriptionStatus = subscriptionData.subscriptionStatus;
+            } catch (err) {
+                console.warn('AuthBL.refresh: getSubscriptionFeatures failed (using defaults):', err);
+            }
+        }
+
+        // Generar nuevo token con datos actualizados
         const payload = {
-            sub:                decoded.sub,
-            uuid:               decoded.uuid,
-            email:              decoded.email,
-            role:               decoded.role,
-            companyId:          decoded.companyId,
-            clientId:           decoded.clientId,
-            nombreUsuario:      decoded.nombreUsuario,
-            companyActive:      decoded.companyActive,
-            usedApi:            decoded.usedApi,
-            subscriptionStatus: decoded.subscriptionStatus,
+            sub:                user.id,
+            uuid:               user.uuid,
+            email:              user.email,
+            role:               user.role,
+            companyId:          user.company_id,
+            clientId:           user.client_id,
+            nombreUsuario:      `${user.first_name} ${user.last_name}`.trim(),
+            companyActive:      Boolean(user.company_active),
+            usedApi,
+            subscriptionStatus,
         };
 
         const newToken = signToken(payload);
