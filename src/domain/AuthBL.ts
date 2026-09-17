@@ -9,8 +9,6 @@ import {
     RefreshRequestDTO,
     RefreshResponseDTO,
     RegisterFcmRequestDTO,
-    RegisterRequestDTO,
-    RegisterResponseDTO,
     AuthUserResponseDTO,
     UserRowDTO,
     GetWorkOrdersRequestDTO,
@@ -22,7 +20,6 @@ import { ValidationError } from '../core/common/QueryFailException';
 
 const JWT_SECRET  = process.env.JWT_SECRET  || 'kronos-secret-dev';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '30d';
-const BCRYPT_SALT_ROUNDS = 10;
 
 function buildUserResponse(row: UserRowDTO): AuthUserResponseDTO {
     return {
@@ -172,86 +169,6 @@ export class AuthBL implements IAuthBL {
             throw new ValidationError('userId y token son requeridos');
         }
         await this.repo.upsertFcmToken(dto.userId, dto.token);
-    }
-
-    // ── Registro de empresa ───────────────────────────────────────────────────
-
-    async registerCompany(dto: RegisterRequestDTO): Promise<RegisterResponseDTO> {
-        // ── Validaciones ──────────────────────────────────────────────────────
-        const companyName = dto.company?.name?.trim();
-        const firstName   = dto.admin?.firstName?.trim();
-        const lastName    = dto.admin?.lastName?.trim();
-        const email       = dto.admin?.email?.trim().toLowerCase();
-        const password    = dto.admin?.password;
-
-        if (!companyName)  throw new ValidationError('El nombre de la empresa es requerido');
-        if (!firstName)    throw new ValidationError('El nombre del administrador es requerido');
-        if (!lastName)     throw new ValidationError('El apellido del administrador es requerido');
-        if (!email)        throw new ValidationError('El correo electrónico es requerido');
-        if (!password)     throw new ValidationError('La contraseña es requerida');
-        if (password.length < 8) throw new ValidationError('La contraseña debe tener al menos 8 caracteres');
-
-        // Validación básica de formato email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) throw new ValidationError('El correo electrónico no tiene un formato válido');
-
-        // ── Hash de password ──────────────────────────────────────────────────
-        const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-
-        // ── Normalizar DTO antes de pasar al repo ─────────────────────────────
-        const normalizedDto: RegisterRequestDTO = {
-            company: { ...dto.company, name: companyName, taxId: dto.company.taxId?.trim() || undefined },
-            admin:   { ...dto.admin, firstName, lastName, email },
-        };
-
-        // ── Transacción en el repository ──────────────────────────────────────
-        let result: { companyId: number; companyUuid: string; appId: string; userId: number; userUuid: string };
-        try {
-            result = await this.repo.registerCompany(normalizedDto, passwordHash);
-        } catch (err: any) {
-            if (err.code === 'EMAIL_EXISTS') throw new ValidationError(err.message);
-            if (err.code === 'NIT_EXISTS')   throw new ValidationError(err.message);
-            throw err;
-        }
-
-        // ── Construir JWT de auto-login ───────────────────────────────────────
-        const payload = {
-            sub:                result.userId,
-            uuid:               result.userUuid,
-            email:              email,
-            role:               'COMPANY_ADMIN',
-            companyId:          result.companyId,
-            clientId:           null,
-            nombreUsuario:      `${firstName} ${lastName}`.trim(),
-            companyActive:      true,                   // Empresa recién creada, siempre activa
-            usedApi:            false,                  // Suscripción TRIAL sin plan_id, no tiene features_enabled
-            subscriptionStatus: 'TRIAL' as const,       // Nueva empresa siempre empieza en TRIAL
-        };
-        const token = signToken(payload);
-
-        return {
-            token,
-            expiresIn: JWT_EXPIRES,
-            user: {
-                id:          result.userId,
-                uuid:        result.userUuid,
-                companyId:   result.companyId,
-                clientId:    null,
-                role:        'COMPANY_ADMIN',
-                firstName,
-                lastName,
-                email,
-                phone:       dto.admin.phone?.trim() || null,
-                avatarUrl:   null,
-                preferences: null,
-            },
-            company: {
-                id:    result.companyId,
-                uuid:  result.companyUuid,
-                name:  companyName,
-                appId: result.appId,
-            },
-        };
     }
 
     async getWorkOrders(dto: GetWorkOrdersRequestDTO): Promise<GetWorkOrdersResponseDTO> {

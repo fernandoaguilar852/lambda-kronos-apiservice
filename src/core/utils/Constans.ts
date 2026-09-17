@@ -162,28 +162,6 @@ export const AUTH_QUERIES = {
         LIMIT 1
     `,
 
-    // ── Registro inicial de empresa ───────────────────────────────────────
-    CHECK_EMAIL_EXISTS:  `SELECT id FROM users WHERE email = ? LIMIT 1`,
-    CHECK_NIT_EXISTS:    `SELECT id FROM companies WHERE nit = ? LIMIT 1`,
-
-    INSERT_COMPANY: `
-        INSERT INTO companies (uuid, name, nit, contact_email, message_uuid, app_id)
-        VALUES (?, ?, ?, ?, ?, ?)`,
-
-    INSERT_SUBSCRIPTION: `
-        INSERT INTO subscriptions (uuid, company_id, plan_id, status, current_period_start, current_period_end)
-        VALUES (?, ?, NULL, 'TRIAL', NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))`,
-
-    INSERT_COMPANY_SETTINGS: `
-        INSERT INTO company_settings (company_id) VALUES (?)`,
-
-    INSERT_USER: `
-        INSERT INTO users (uuid, company_id, role, first_name, last_name, email, phone, password, is_active)
-        VALUES (?, ?, 'COMPANY_ADMIN', ?, ?, ?, ?, ?, 1)`,
-
-    // Nota: work_order_types y work_order_statuses son catálogos GLOBALES
-    // (no tienen company_id). Se seedean una sola vez en el setup de la BD.
-
     // ── Work Orders External API ──────────────────────────────────────────
 
     /**

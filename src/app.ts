@@ -11,7 +11,6 @@ import {
     LogoutRequestDTO,
     RefreshRequestDTO,
     RegisterFcmRequestDTO,
-    RegisterRequestDTO,
     GetWorkOrdersRequestDTO,
     GetWorkOrderByIdRequestDTO,
 } from './repositories/dtos/AuthDTO';
@@ -59,13 +58,6 @@ export const lambdaHandler = async (
         const controller = new AuthController(
             new AuthBL(new AuthRepository())
         );
-
-        // ── POST /v1/fsm/auth/register ────────────────────────────────────────
-        // Ruta PÚBLICA — crea empresa + usuario administrador + suscripción TRIAL
-        if (method === 'POST' && path === '/v1/fsm/auth/register') {
-            const body = JSON.parse(event.body || '{}') as RegisterRequestDTO;
-            return controller.registerCompany(body, requestId, 'auth-service');
-        }
 
         // ── POST /v1/fsm/auth/login ───────────────────────────────────────────
         // Ruta PÚBLICA — no requiere JWT

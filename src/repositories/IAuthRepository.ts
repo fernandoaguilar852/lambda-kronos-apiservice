@@ -1,7 +1,5 @@
 import {
     UserRowDTO,
-    RegisterRequestDTO,
-    RegisterResponseDTO,
     GetWorkOrdersRequestDTO,
     GetWorkOrdersResponseDTO,
     GetWorkOrderByIdRequestDTO,
@@ -45,19 +43,6 @@ export interface IAuthRepository {
     getSubscriptionFeatures(companyId: number): Promise<{
         usedApi: boolean;
         subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
-    }>;
-
-    /**
-     * Registra una nueva empresa con su usuario administrador.
-     * Ejecuta la transacción completa: company + subscription + settings + user.
-     * Retorna los IDs y UUIDs generados para construir el JWT.
-     */
-    registerCompany(dto: RegisterRequestDTO, passwordHash: string): Promise<{
-        companyId:   number;
-        companyUuid: string;
-        appId:       string;
-        userId:      number;
-        userUuid:    string;
     }>;
 
     /**
