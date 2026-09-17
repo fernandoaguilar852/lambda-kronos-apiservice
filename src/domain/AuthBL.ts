@@ -67,12 +67,25 @@ export class AuthBL implements IAuthBL {
             }
         }
 
+        // Obtener usedApi del plan de suscripción de la empresa
+        let usedApi = false;
+        if (user.company_id) {
+            try {
+                usedApi = await this.repo.getSubscriptionUsedApi(user.company_id);
+            } catch (err) {
+                console.warn('AuthBL.login: getSubscriptionUsedApi failed (using false):', err);
+            }
+        }
+
         const payload = {
-            sub:       user.id,
-            uuid:      user.uuid,
-            role:      user.role,
-            companyId: user.company_id,
-            clientId:  user.client_id,
+            sub:            user.id,
+            uuid:           user.uuid,
+            role:           user.role,
+            companyId:      user.company_id,
+            clientId:       user.client_id,
+            nombreUsuario:  `${user.first_name} ${user.last_name}`.trim(),
+            companyActive:  Boolean(user.company_active),
+            usedApi,
         };
 
         const token = signToken(payload);
@@ -122,12 +135,16 @@ export class AuthBL implements IAuthBL {
             throw new ValidationError('Token no corresponde al usuario indicado');
         }
 
+        // Preservar todos los campos del JWT original, incluyendo los nuevos
         const payload = {
-            sub:       decoded.sub,
-            uuid:      decoded.uuid,
-            role:      decoded.role,
-            companyId: decoded.companyId,
-            clientId:  decoded.clientId,
+            sub:            decoded.sub,
+            uuid:           decoded.uuid,
+            role:           decoded.role,
+            companyId:      decoded.companyId,
+            clientId:       decoded.clientId,
+            nombreUsuario:  decoded.nombreUsuario,
+            companyActive:  decoded.companyActive,
+            usedApi:        decoded.usedApi,
         };
 
         const newToken = signToken(payload);
@@ -188,11 +205,14 @@ export class AuthBL implements IAuthBL {
 
         // ── Construir JWT de auto-login ───────────────────────────────────────
         const payload = {
-            sub:       result.userId,
-            uuid:      result.userUuid,
-            role:      'COMPANY_ADMIN',
-            companyId: result.companyId,
-            clientId:  null,
+            sub:            result.userId,
+            uuid:           result.userUuid,
+            role:           'COMPANY_ADMIN',
+            companyId:      result.companyId,
+            clientId:       null,
+            nombreUsuario:  `${firstName} ${lastName}`.trim(),
+            companyActive:  true,   // Empresa recién creada, siempre activa
+            usedApi:        false,  // Suscripción TRIAL sin plan_id, no tiene features_enabled
         };
         const token = signToken(payload);
 

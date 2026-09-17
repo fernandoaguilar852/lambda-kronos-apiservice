@@ -1,5 +1,5 @@
 {
-  "name": "lambda-kronos-auth-root",
+  "name": "lambda-kronos-apiservice-root",
   "version": "1.0.0",
   "scripts": {
     "build": "sam build",

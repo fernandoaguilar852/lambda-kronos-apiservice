@@ -33,6 +33,7 @@ export interface UserRowDTO {
     avatar_url: string | null;
     current_session_token: string | null;
     preferences: string | null;
+    company_active: number | null;  // is_active de companies
 }
 
 export interface AuthUserResponseDTO {

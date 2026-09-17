@@ -3,17 +3,20 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'kronos-secret-dev';
 
 /**
- * Payload incluido en el JWT emitido por lambda-kronos-auth en el login.
+ * Payload incluido en el JWT emitido por lambda-kronos-apiservice en el login.
  * Todos los campos son garantizados por AuthBL.login().
  */
 export interface JwtPayload {
-    sub:       number;   // userId
-    uuid:      string;   // user UUID
-    role:      string;   // ADMIN | TECHNICIAN | CLIENT_USER | SUPER_ADMIN
-    companyId: number;   // tenant ID (companyId)
-    clientId?: number;   // solo para CLIENT_USER
-    iat?:      number;
-    exp?:      number;
+    sub:            number;   // userId
+    uuid:           string;   // user UUID
+    role:           string;   // SUPER_ADMIN | COMPANY_ADMIN | TECHNICIAN | CLIENT_USER
+    companyId:      number;   // tenant ID (companyId)
+    clientId?:      number;   // solo para CLIENT_USER
+    nombreUsuario:  string;   // first_name + ' ' + last_name
+    companyActive:  boolean;  // is_active de companies
+    usedApi:        boolean;  // features_enabled.usedApi de subscription_plans
+    iat?:           number;
+    exp?:           number;
 }
 
 /**

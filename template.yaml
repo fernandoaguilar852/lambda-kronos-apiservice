@@ -1,15 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Lambda de autenticación - Sistema Kronos
+Description: Lambda API Service - Sistema Kronos
 
 Resources:
-  AuthFunction:
+  ApiServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: lambda-kronos-auth
+      FunctionName: lambda-kronos-apiservice
       CodeUri: src/
-      Description: 'Lambda de autenticación JWT para Kronos'
-      MemorySize: 256
+      Description: 'Lambda API Service - Autenticación JWT para Kronos'
+      MemorySize: 512
       Timeout: 30
       Handler: app.lambdaHandler
       Runtime: nodejs20.x
@@ -39,7 +39,7 @@ Resources:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource:
-                - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-kronos-auth:*'
+                - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-kronos-apiservice:*'
       Events:
         ApiProxy:
           Type: Api
@@ -55,8 +55,8 @@ Resources:
       BuildMethod: makefile
 
 Outputs:
-  AuthFunctionArn:
-    Value: !GetAtt AuthFunction.Arn
+  ApiServiceFunctionArn:
+    Value: !GetAtt ApiServiceFunction.Arn
   ApiGatewayUrl:
-    Description: URL del API Gateway para Work Order Statuses
+    Description: URL del API Gateway para Kronos API Service
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

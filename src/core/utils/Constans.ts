@@ -1,6 +1,6 @@
 /**
  * Constantes base compartidas por todas las lambdas de Kronos.
- * Lambda: lambda-kronos-auth — incluye AUTH_QUERIES específicos de autenticación.
+ * Lambda: lambda-kronos-apiservice — incluye AUTH_QUERIES específicos de autenticación.
  */
 
 // ===========================
@@ -120,7 +120,34 @@ export const toMysqlDatetime = (v: string | Date | null | undefined): string | n
 // AUTH QUERIES
 // ===========================
 export const AUTH_QUERIES = {
-    GET_USER_BY_EMAIL: `SELECT id, uuid, company_id, client_id, first_name, last_name, password, email, phone, role, is_active, avatar_url, current_session_token, preferences FROM users WHERE email = ? AND is_active = 1 LIMIT 1`,
+    // Obtiene usuario con datos de company (is_active)
+    GET_USER_BY_EMAIL: `
+        SELECT
+            u.id, u.uuid, u.company_id, u.client_id, u.first_name, u.last_name,
+            u.password, u.email, u.phone, u.role, u.is_active, u.avatar_url,
+            u.current_session_token, u.preferences,
+            c.is_active AS company_active
+        FROM users u
+        LEFT JOIN companies c ON u.company_id = c.id
+        WHERE u.email = ? AND u.is_active = 1
+        LIMIT 1
+    `,
+
+    // Obtiene usedApi desde el plan de suscripción activo de la empresa
+    // Extrae usedApi del JSON features_enabled, retorna false si no existe o es null
+    GET_SUBSCRIPTION_PLAN_FEATURES: `
+        SELECT
+            COALESCE(
+                JSON_EXTRACT(sp.features_enabled, '$.usedApi'),
+                false
+            ) AS used_api
+        FROM subscriptions s
+        LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
+        WHERE s.company_id = ?
+        ORDER BY s.created_at DESC
+        LIMIT 1
+    `,
+
     UPDATE_SESSION_TOKEN: `UPDATE users SET current_session_token = ?, updated_at = NOW() WHERE id = ?`,
     CLEAR_SESSION_TOKEN: `UPDATE users SET current_session_token = NULL, updated_at = NOW() WHERE id = ?`,
     UPSERT_FCM_TOKEN: `INSERT INTO user_fcm_tokens (user_id, token) VALUES (?, ?) ON DUPLICATE KEY UPDATE token = VALUES(token)`,

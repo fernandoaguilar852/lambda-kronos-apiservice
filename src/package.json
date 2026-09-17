@@ -1,7 +1,7 @@
 {
-  "name": "lambda-kronos-auth",
+  "name": "lambda-kronos-apiservice",
   "version": "1.0.0",
-  "description": "Lambda de autenticación - Sistema Kronos",
+  "description": "Lambda API Service - Sistema Kronos",
   "main": "app.js",
   "scripts": {
     "test": "echo \"No tests\" && exit 0"

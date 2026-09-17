@@ -3,9 +3,9 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "lambda-kronos-auth-stack"
+stack_name = "lambda-kronos-apiservice-stack"
 resolve_s3 = true
-s3_prefix = "lambda-kronos-auth"
+s3_prefix = "lambda-kronos-apiservice"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"

@@ -74,6 +74,54 @@ export class AuthRepository implements IAuthRepository {
         }
     }
 
+    /**
+     * Obtiene el valor usedApi del plan de suscripción activo de la empresa.
+     * Retorna false si no hay plan o el valor no está definido.
+     */
+    async getSubscriptionUsedApi(companyId: number): Promise<boolean> {
+        const connection = await mysqlClient.getConnection();
+        try {
+            const [rows]: any = await connection.query(
+                AUTH_QUERIES.GET_SUBSCRIPTION_PLAN_FEATURES,
+                [companyId]
+            );
+
+            if (rows.length === 0) {
+                return false; // No hay suscripción
+            }
+
+            const usedApiValue = rows[0].used_api;
+
+            // MySQL puede retornar: true, false, 1, 0, "true", "false", null
+            // Normalizamos a boolean
+            if (usedApiValue === null || usedApiValue === undefined) {
+                return false;
+            }
+
+            // Si es string JSON, lo parseamos
+            if (typeof usedApiValue === 'string') {
+                try {
+                    return JSON.parse(usedApiValue) === true;
+                } catch {
+                    return usedApiValue.toLowerCase() === 'true';
+                }
+            }
+
+            // Si es número (1, 0)
+            if (typeof usedApiValue === 'number') {
+                return usedApiValue === 1;
+            }
+
+            // Si ya es boolean
+            return Boolean(usedApiValue);
+        } catch (error) {
+            console.error('AuthRepository.getSubscriptionUsedApi error:', error);
+            return false; // Por defecto false en caso de error
+        } finally {
+            connection.release();
+        }
+    }
+
     async registerCompany(
         dto: RegisterRequestDTO,
         passwordHash: string
