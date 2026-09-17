@@ -1,7 +1,6 @@
 export interface LoginRequestDTO {
     email: string;
     password: string;
-    fcmToken?: string;
 }
 
 export interface RefreshRequestDTO {

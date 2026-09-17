@@ -101,13 +101,6 @@ export class AuthBL implements IAuthBL {
             console.warn('AuthBL.login: updateSessionToken failed (non-critical):', err?.message)
         );
 
-        // Registrar FCM token si viene en el request
-        if (dto.fcmToken) {
-            this.repo.upsertFcmToken(user.id, dto.fcmToken).catch(err =>
-                console.warn('AuthBL.login: upsertFcmToken failed (non-critical):', err?.message)
-            );
-        }
-
         return {
             token,
             expiresIn: JWT_EXPIRES,
