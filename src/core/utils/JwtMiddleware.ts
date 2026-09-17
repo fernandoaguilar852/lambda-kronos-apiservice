@@ -7,16 +7,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'kronos-secret-dev';
  * Todos los campos son garantizados por AuthBL.login().
  */
 export interface JwtPayload {
-    sub:            number;   // userId
-    uuid:           string;   // user UUID
-    role:           string;   // SUPER_ADMIN | COMPANY_ADMIN | TECHNICIAN | CLIENT_USER
-    companyId:      number;   // tenant ID (companyId)
-    clientId?:      number;   // solo para CLIENT_USER
-    nombreUsuario:  string;   // first_name + ' ' + last_name
-    companyActive:  boolean;  // is_active de companies
-    usedApi:        boolean;  // features_enabled.usedApi de subscription_plans
-    iat?:           number;
-    exp?:           number;
+    sub:                 number;   // userId
+    uuid:                string;   // user UUID
+    email:               string;   // email del usuario
+    role:                string;   // SUPER_ADMIN | COMPANY_ADMIN | TECHNICIAN | CLIENT_USER
+    companyId:           number;   // tenant ID (companyId)
+    clientId?:           number;   // solo para CLIENT_USER
+    nombreUsuario:       string;   // first_name + ' ' + last_name
+    companyActive:       boolean;  // is_active de companies
+    usedApi:             boolean;  // features_enabled.usedApi de subscription_plans
+    subscriptionStatus:  string;   // status de subscriptions: TRIAL | ACTIVE | PAST_DUE | CANCELED
+    iat?:                number;
+    exp?:                number;
 }
 
 /**

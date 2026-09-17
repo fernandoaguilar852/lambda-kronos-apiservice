@@ -30,10 +30,14 @@ export interface IAuthRepository {
     clientHasActiveContract(clientId: number): Promise<boolean>;
 
     /**
-     * Obtiene el valor usedApi del plan de suscripción activo de la empresa.
-     * Retorna false si no hay plan, el plan no existe, o features_enabled.usedApi no está definido.
+     * Obtiene los datos de la suscripción activa de la empresa.
+     * Retorna usedApi (del plan) y subscriptionStatus (de la suscripción).
+     * Valores por defecto: usedApi=false, subscriptionStatus='TRIAL'.
      */
-    getSubscriptionUsedApi(companyId: number): Promise<boolean>;
+    getSubscriptionFeatures(companyId: number): Promise<{
+        usedApi: boolean;
+        subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
+    }>;
 
     /**
      * Registra una nueva empresa con su usuario administrador.

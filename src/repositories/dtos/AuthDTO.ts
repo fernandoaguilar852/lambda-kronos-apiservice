@@ -53,7 +53,7 @@ export interface AuthUserResponseDTO {
 export interface LoginResponseDTO {
     token: string;
     expiresIn: string;
-    user: AuthUserResponseDTO;
+    // user object eliminado por seguridad - toda la info está en el JWT
 }
 
 export interface RefreshResponseDTO {

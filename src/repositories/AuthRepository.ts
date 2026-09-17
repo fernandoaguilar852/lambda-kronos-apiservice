@@ -75,10 +75,13 @@ export class AuthRepository implements IAuthRepository {
     }
 
     /**
-     * Obtiene el valor usedApi del plan de suscripción activo de la empresa.
-     * Retorna false si no hay plan o el valor no está definido.
+     * Obtiene los datos de la suscripción activa de la empresa.
+     * Retorna usedApi (del plan) y subscriptionStatus (de la suscripción).
      */
-    async getSubscriptionUsedApi(companyId: number): Promise<boolean> {
+    async getSubscriptionFeatures(companyId: number): Promise<{
+        usedApi: boolean;
+        subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
+    }> {
         const connection = await mysqlClient.getConnection();
         try {
             const [rows]: any = await connection.query(
@@ -86,37 +89,41 @@ export class AuthRepository implements IAuthRepository {
                 [companyId]
             );
 
+            // Valores por defecto
             if (rows.length === 0) {
-                return false; // No hay suscripción
+                return { usedApi: false, subscriptionStatus: 'TRIAL' };
             }
 
-            const usedApiValue = rows[0].used_api;
+            const row = rows[0];
+            const subscriptionStatus = row.subscription_status || 'TRIAL';
+            const usedApiValue = row.used_api;
 
-            // MySQL puede retornar: true, false, 1, 0, "true", "false", null
-            // Normalizamos a boolean
-            if (usedApiValue === null || usedApiValue === undefined) {
-                return false;
-            }
+            // Normalizar usedApi a boolean
+            let usedApi = false;
 
-            // Si es string JSON, lo parseamos
-            if (typeof usedApiValue === 'string') {
-                try {
-                    return JSON.parse(usedApiValue) === true;
-                } catch {
-                    return usedApiValue.toLowerCase() === 'true';
+            if (usedApiValue !== null && usedApiValue !== undefined) {
+                // Si es string JSON, lo parseamos
+                if (typeof usedApiValue === 'string') {
+                    try {
+                        usedApi = JSON.parse(usedApiValue) === true;
+                    } catch {
+                        usedApi = usedApiValue.toLowerCase() === 'true';
+                    }
+                }
+                // Si es número (1, 0)
+                else if (typeof usedApiValue === 'number') {
+                    usedApi = usedApiValue === 1;
+                }
+                // Si ya es boolean
+                else {
+                    usedApi = Boolean(usedApiValue);
                 }
             }
 
-            // Si es número (1, 0)
-            if (typeof usedApiValue === 'number') {
-                return usedApiValue === 1;
-            }
-
-            // Si ya es boolean
-            return Boolean(usedApiValue);
+            return { usedApi, subscriptionStatus };
         } catch (error) {
-            console.error('AuthRepository.getSubscriptionUsedApi error:', error);
-            return false; // Por defecto false en caso de error
+            console.error('AuthRepository.getSubscriptionFeatures error:', error);
+            return { usedApi: false, subscriptionStatus: 'TRIAL' }; // Por defecto en caso de error
         } finally {
             connection.release();
         }

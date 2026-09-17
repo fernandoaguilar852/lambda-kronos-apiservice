@@ -133,10 +133,11 @@ export const AUTH_QUERIES = {
         LIMIT 1
     `,
 
-    // Obtiene usedApi desde el plan de suscripción activo de la empresa
+    // Obtiene usedApi y status desde la suscripción activa de la empresa
     // Extrae usedApi del JSON features_enabled, retorna false si no existe o es null
     GET_SUBSCRIPTION_PLAN_FEATURES: `
         SELECT
+            s.status AS subscription_status,
             COALESCE(
                 JSON_EXTRACT(sp.features_enabled, '$.usedApi'),
                 false

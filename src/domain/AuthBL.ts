@@ -67,25 +67,31 @@ export class AuthBL implements IAuthBL {
             }
         }
 
-        // Obtener usedApi del plan de suscripción de la empresa
+        // Obtener datos de suscripción de la empresa (usedApi y status)
         let usedApi = false;
+        let subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' = 'TRIAL';
+
         if (user.company_id) {
             try {
-                usedApi = await this.repo.getSubscriptionUsedApi(user.company_id);
+                const subscriptionData = await this.repo.getSubscriptionFeatures(user.company_id);
+                usedApi = subscriptionData.usedApi;
+                subscriptionStatus = subscriptionData.subscriptionStatus;
             } catch (err) {
-                console.warn('AuthBL.login: getSubscriptionUsedApi failed (using false):', err);
+                console.warn('AuthBL.login: getSubscriptionFeatures failed (using defaults):', err);
             }
         }
 
         const payload = {
-            sub:            user.id,
-            uuid:           user.uuid,
-            role:           user.role,
-            companyId:      user.company_id,
-            clientId:       user.client_id,
-            nombreUsuario:  `${user.first_name} ${user.last_name}`.trim(),
-            companyActive:  Boolean(user.company_active),
+            sub:                user.id,
+            uuid:               user.uuid,
+            email:              user.email,
+            role:               user.role,
+            companyId:          user.company_id,
+            clientId:           user.client_id,
+            nombreUsuario:      `${user.first_name} ${user.last_name}`.trim(),
+            companyActive:      Boolean(user.company_active),
             usedApi,
+            subscriptionStatus,
         };
 
         const token = signToken(payload);
@@ -105,7 +111,6 @@ export class AuthBL implements IAuthBL {
         return {
             token,
             expiresIn: JWT_EXPIRES,
-            user:      buildUserResponse(user),
         };
     }
 
@@ -137,14 +142,16 @@ export class AuthBL implements IAuthBL {
 
         // Preservar todos los campos del JWT original, incluyendo los nuevos
         const payload = {
-            sub:            decoded.sub,
-            uuid:           decoded.uuid,
-            role:           decoded.role,
-            companyId:      decoded.companyId,
-            clientId:       decoded.clientId,
-            nombreUsuario:  decoded.nombreUsuario,
-            companyActive:  decoded.companyActive,
-            usedApi:        decoded.usedApi,
+            sub:                decoded.sub,
+            uuid:               decoded.uuid,
+            email:              decoded.email,
+            role:               decoded.role,
+            companyId:          decoded.companyId,
+            clientId:           decoded.clientId,
+            nombreUsuario:      decoded.nombreUsuario,
+            companyActive:      decoded.companyActive,
+            usedApi:            decoded.usedApi,
+            subscriptionStatus: decoded.subscriptionStatus,
         };
 
         const newToken = signToken(payload);
@@ -205,14 +212,16 @@ export class AuthBL implements IAuthBL {
 
         // ── Construir JWT de auto-login ───────────────────────────────────────
         const payload = {
-            sub:            result.userId,
-            uuid:           result.userUuid,
-            role:           'COMPANY_ADMIN',
-            companyId:      result.companyId,
-            clientId:       null,
-            nombreUsuario:  `${firstName} ${lastName}`.trim(),
-            companyActive:  true,   // Empresa recién creada, siempre activa
-            usedApi:        false,  // Suscripción TRIAL sin plan_id, no tiene features_enabled
+            sub:                result.userId,
+            uuid:               result.userUuid,
+            email:              email,
+            role:               'COMPANY_ADMIN',
+            companyId:          result.companyId,
+            clientId:           null,
+            nombreUsuario:      `${firstName} ${lastName}`.trim(),
+            companyActive:      true,                   // Empresa recién creada, siempre activa
+            usedApi:            false,                  // Suscripción TRIAL sin plan_id, no tiene features_enabled
+            subscriptionStatus: 'TRIAL' as const,       // Nueva empresa siempre empieza en TRIAL
         };
         const token = signToken(payload);
 
