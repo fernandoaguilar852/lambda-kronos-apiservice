@@ -5,7 +5,6 @@ export interface LoginRequestDTO {
 
 export interface RefreshRequestDTO {
     token: string;
-    userId: number;
 }
 
 export interface LogoutRequestDTO {

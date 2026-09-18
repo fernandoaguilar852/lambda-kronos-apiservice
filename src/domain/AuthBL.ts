@@ -118,8 +118,8 @@ export class AuthBL implements IAuthBL {
     }
 
     async refresh(dto: RefreshRequestDTO): Promise<RefreshResponseDTO> {
-        if (!dto.token || !dto.userId) {
-            throw new ValidationError('token y userId son requeridos');
+        if (!dto.token) {
+            throw new ValidationError('token es requerido');
         }
 
         let decoded: any;
@@ -129,8 +129,10 @@ export class AuthBL implements IAuthBL {
             throw new ValidationError('Token inválido o expirado');
         }
 
-        if (decoded.sub !== dto.userId) {
-            throw new ValidationError('Token no corresponde al usuario indicado');
+        // Extraer userId del token (campo "sub")
+        const userId = decoded.sub;
+        if (!userId) {
+            throw new ValidationError('Token no contiene información de usuario válida');
         }
 
         // Consultar datos frescos del usuario desde la BD
@@ -177,7 +179,7 @@ export class AuthBL implements IAuthBL {
 
         const newToken = signToken(payload);
 
-        this.repo.updateSessionToken(dto.userId, newToken).catch(err =>
+        this.repo.updateSessionToken(userId, newToken).catch(err =>
             console.warn('AuthBL.refresh: updateSessionToken failed (non-critical):', err?.message)
         );
 
