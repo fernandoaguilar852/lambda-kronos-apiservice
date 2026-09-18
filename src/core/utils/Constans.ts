@@ -323,4 +323,21 @@ export const AUTH_QUERIES = {
         WHERE wo.id = ? AND wo.company_id = ?
         LIMIT 1
     `,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // INSERT: API Usage Logs
+    // ─────────────────────────────────────────────────────────────────────────
+    INSERT_API_USAGE_LOG: `
+        INSERT INTO api_usage_logs (
+            company_id,
+            user_id,
+            endpoint,
+            http_method,
+            status_code,
+            response_time_ms,
+            ip_address,
+            user_agent,
+            error_message
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
 };

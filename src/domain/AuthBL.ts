@@ -96,11 +96,6 @@ export class AuthBL implements IAuthBL {
 
         const token = signToken(payload);
 
-        // Persistir el token de sesión (best-effort — no bloquea el login si falla)
-        this.repo.updateSessionToken(user.id, token).catch(err =>
-            console.warn('AuthBL.login: updateSessionToken failed (non-critical):', err?.message)
-        );
-
         return {
             token,
             expiresIn: JWT_EXPIRES,
@@ -111,10 +106,8 @@ export class AuthBL implements IAuthBL {
         if (!dto.userId) {
             throw new ValidationError('userId es requerido');
         }
-        // Best-effort — el JWT ya no es válido tras expiración sin necesidad de invalidación en BD
-        this.repo.clearSessionToken(dto.userId).catch(err =>
-            console.warn('AuthBL.logout: clearSessionToken failed (non-critical):', err?.message)
-        );
+        // JWT expira en 1 hora - no requiere invalidación en BD
+        // El cliente debe eliminar el token de su almacenamiento local
     }
 
     async refresh(dto: RefreshRequestDTO): Promise<RefreshResponseDTO> {
@@ -178,10 +171,6 @@ export class AuthBL implements IAuthBL {
         };
 
         const newToken = signToken(payload);
-
-        this.repo.updateSessionToken(userId, newToken).catch(err =>
-            console.warn('AuthBL.refresh: updateSessionToken failed (non-critical):', err?.message)
-        );
 
         return { token: newToken, expiresIn: JWT_EXPIRES };
     }

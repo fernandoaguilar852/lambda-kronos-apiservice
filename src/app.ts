@@ -12,6 +12,7 @@ import {
     RefreshRequestDTO,
     GetWorkOrdersRequestDTO,
     GetWorkOrderByIdRequestDTO,
+    ApiUsageLogDTO,
 } from './repositories/dtos/AuthDTO';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -36,12 +37,45 @@ function errorResp(statusCode: number, messageUuid: string, requestAppId: string
     };
 }
 
+/**
+ * Registra un log de uso de API de forma asíncrona (fire-and-forget).
+ * No bloquea la respuesta al cliente si falla.
+ */
+function logApiUsage(
+    repository: AuthRepository,
+    event: APIGatewayProxyEvent,
+    response: APIGatewayProxyResult,
+    startTime: number,
+    companyId: number,
+    userId: number | null
+): void {
+    const responseTimeMs = Date.now() - startTime;
+    const logDto: ApiUsageLogDTO = {
+        companyId,
+        userId,
+        endpoint: event.path,
+        httpMethod: event.httpMethod as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+        statusCode: response.statusCode,
+        responseTimeMs,
+        ipAddress: event.requestContext?.identity?.sourceIp || null,
+        userAgent: event.headers?.['User-Agent'] || event.headers?.['user-agent'] || null,
+        errorMessage: response.statusCode >= 400 ? (JSON.parse(response.body)?.messageResponse?.responseMessage || null) : null,
+    };
+
+    // Fire-and-forget: no esperamos el resultado
+    repository.insertApiUsageLog(logDto).catch(err =>
+        console.warn('Failed to log API usage (non-critical):', err)
+    );
+}
+
 // ─── Lambda Handler ───────────────────────────────────────────────────────────
 
 export const lambdaHandler = async (
     event: APIGatewayProxyEvent,
     _context: Context
 ): Promise<APIGatewayProxyResult> => {
+    const startTime = Date.now();
+
     try {
         const path   = event.path;
         const method = event.httpMethod;
@@ -54,22 +88,49 @@ export const lambdaHandler = async (
         const requestId = event.requestContext?.requestId || '';
 
         // Instanciar stack con DI
+        const repository = new AuthRepository();
         const controller = new AuthController(
-            new AuthBL(new AuthRepository())
+            new AuthBL(repository)
         );
 
         // ── POST /v1/fsm/auth/login ───────────────────────────────────────────
         // Ruta PÚBLICA — no requiere JWT
         if (method === 'POST' && path === '/v1/fsm/auth/login') {
             const body = JSON.parse(event.body || '{}') as LoginRequestDTO;
-            return controller.login(body, requestId, 'auth-service');
+            const response = await controller.login(body, requestId, 'auth-service');
+
+            // Loguear si el login fue exitoso (extraer companyId y userId del usuario)
+            if (response.statusCode === 200) {
+                try {
+                    const user = await repository.getUserByEmail(body.email);
+                    if (user && user.company_id) {
+                        logApiUsage(repository, event, response, startTime, user.company_id, user.id);
+                    }
+                } catch (err) {
+                    console.warn('Failed to log login API usage:', err);
+                }
+            }
+            return response;
         }
 
         // ── POST /v1/fsm/auth/refresh ─────────────────────────────────────────
         // Ruta PÚBLICA — token viene en el body
         if (method === 'POST' && path === '/v1/fsm/auth/refresh') {
             const body = JSON.parse(event.body || '{}') as RefreshRequestDTO;
-            return controller.refresh(body, requestId, 'auth-service');
+            const response = await controller.refresh(body, requestId, 'auth-service');
+
+            // Loguear si el refresh fue exitoso (extraer companyId y userId del token)
+            if (response.statusCode === 200 && body.token) {
+                try {
+                    const decoded = verifyJwt(`Bearer ${body.token}`);
+                    if (decoded.companyId) {
+                        logApiUsage(repository, event, response, startTime, decoded.companyId, decoded.sub);
+                    }
+                } catch (err) {
+                    console.warn('Failed to log refresh API usage:', err);
+                }
+            }
+            return response;
         }
 
         // ── Rutas protegidas — requieren JWT válido ───────────────────────────
@@ -77,6 +138,7 @@ export const lambdaHandler = async (
         try {
             jwtPayload = verifyJwt(event.headers?.['Authorization'] || event.headers?.['authorization']);
         } catch {
+            // No podemos loguear aquí porque no tenemos companyId ni userId del JWT inválido
             return errorResp(401, requestId, 'auth-service', 'Token de autorización inválido o expirado');
         }
 
@@ -89,7 +151,9 @@ export const lambdaHandler = async (
             // Tomar userId del JWT (ignorar body.userId si se envía)
             const body = JSON.parse(event.body || '{}') as LogoutRequestDTO;
             body.userId = userId;
-            return controller.logout(body, requestId, requestAppId);
+            const response = await controller.logout(body, requestId, requestAppId);
+            logApiUsage(repository, event, response, startTime, companyId, userId);
+            return response;
         }
 
         // ── GET /v1/fsm/external/work-orders ──────────────────────────────────
@@ -99,7 +163,9 @@ export const lambdaHandler = async (
 
             // Validar query params obligatorios
             if (!queryParams.pageNumber || !queryParams.pageSize) {
-                return errorResp(400, requestId, requestAppId, 'Query params obligatorios: pageNumber y pageSize');
+                const response = errorResp(400, requestId, requestAppId, 'Query params obligatorios: pageNumber y pageSize');
+                logApiUsage(repository, event, response, startTime, companyId, userId);
+                return response;
             }
 
             const dto: GetWorkOrdersRequestDTO = {
@@ -108,7 +174,9 @@ export const lambdaHandler = async (
                 companyId, // ⭐ Del JWT - garantiza multi-tenancy
             };
 
-            return controller.getWorkOrders(dto, requestId, requestAppId);
+            const response = await controller.getWorkOrders(dto, requestId, requestAppId);
+            logApiUsage(repository, event, response, startTime, companyId, userId);
+            return response;
         }
 
         // ── GET /v1/fsm/external/work-orders/{id} ─────────────────────────────────
@@ -118,7 +186,9 @@ export const lambdaHandler = async (
             const workOrderId = parseInt(pathParts[pathParts.length - 1], 10);
 
             if (isNaN(workOrderId) || workOrderId < 1) {
-                return errorResp(400, requestId, requestAppId, 'ID de work order inválido');
+                const response = errorResp(400, requestId, requestAppId, 'ID de work order inválido');
+                logApiUsage(repository, event, response, startTime, companyId, userId);
+                return response;
             }
 
             const dto: GetWorkOrderByIdRequestDTO = {
@@ -126,7 +196,9 @@ export const lambdaHandler = async (
                 companyId, // ⭐ Del JWT - garantiza multi-tenancy
             };
 
-            return controller.getWorkOrderById(dto, requestId, requestAppId);
+            const response = await controller.getWorkOrderById(dto, requestId, requestAppId);
+            logApiUsage(repository, event, response, startTime, companyId, userId);
+            return response;
         }
 
         // 404

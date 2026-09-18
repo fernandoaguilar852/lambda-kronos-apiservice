@@ -187,3 +187,16 @@ export interface WorkOrderDetailDTO {
     createdAt: string;
     updatedAt: string;
 }
+
+// DTO para registrar logs de uso de API
+export interface ApiUsageLogDTO {
+    companyId: number;
+    userId: number | null;
+    endpoint: string;
+    httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    statusCode: number;
+    responseTimeMs: number | null;
+    ipAddress: string | null;
+    userAgent: string | null;
+    errorMessage: string | null;
+}

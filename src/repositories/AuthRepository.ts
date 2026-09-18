@@ -10,6 +10,7 @@ import {
     WorkOrderDTO,
     GetWorkOrderByIdRequestDTO,
     WorkOrderDetailDTO,
+    ApiUsageLogDTO,
 } from './dtos/AuthDTO';
 
 export class AuthRepository implements IAuthRepository {
@@ -312,6 +313,28 @@ export class AuthRepository implements IAuthRepository {
         } catch (error) {
             console.error('AuthRepository.getWorkOrderById error:', error);
             throw new QueryFailException('Error al obtener work order por ID');
+        } finally {
+            connection.release();
+        }
+    }
+
+    async insertApiUsageLog(dto: ApiUsageLogDTO): Promise<void> {
+        const connection = await mysqlClient.getConnection();
+        try {
+            await connection.query(AUTH_QUERIES.INSERT_API_USAGE_LOG, [
+                dto.companyId,
+                dto.userId,
+                dto.endpoint,
+                dto.httpMethod,
+                dto.statusCode,
+                dto.responseTimeMs,
+                dto.ipAddress,
+                dto.userAgent,
+                dto.errorMessage,
+            ]);
+        } catch (error) {
+            // Best-effort: no bloquear el flujo principal si falla el log
+            console.warn('AuthRepository.insertApiUsageLog error:', error);
         } finally {
             connection.release();
         }

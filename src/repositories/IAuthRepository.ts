@@ -4,6 +4,7 @@ import {
     GetWorkOrdersResponseDTO,
     GetWorkOrderByIdRequestDTO,
     WorkOrderDetailDTO,
+    ApiUsageLogDTO,
 } from './dtos/AuthDTO';
 
 export interface IAuthRepository {
@@ -52,4 +53,10 @@ export interface IAuthRepository {
      * Retorna null si la work order no existe o no pertenece al companyId.
      */
     getWorkOrderById(dto: GetWorkOrderByIdRequestDTO): Promise<WorkOrderDetailDTO | null>;
+
+    /**
+     * Registra un log de uso de API en la tabla api_usage_logs.
+     * Best-effort: errores no bloquean el flujo principal.
+     */
+    insertApiUsageLog(dto: ApiUsageLogDTO): Promise<void>;
 }
