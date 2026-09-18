@@ -18,7 +18,7 @@ import {
 import { ValidationError } from '../core/common/QueryFailException';
 
 const JWT_SECRET  = process.env.JWT_SECRET  || 'kronos-secret-dev';
-const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '30d';
+const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '1h';
 
 function buildUserResponse(row: UserRowDTO): AuthUserResponseDTO {
     return {
