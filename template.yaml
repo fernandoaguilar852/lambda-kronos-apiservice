@@ -22,8 +22,8 @@ Resources:
           MYSQL_PASSWORD: KratosMilo123**
           MYSQL_DATABASE: kronos-app
           NODE_ENVIRONMENT: DEV
-          JWT_SECRET: ''
-          JWT_EXPIRES_IN: '30d'
+          JWT_SECRET: 'R7bFVSYHZ/ej2hc418+PqZDvkJG3RT2zq6RHQKTIIiY='
+          JWT_EXPIRES_IN: '1h'
       LoggingConfig:
         LogFormat: JSON
         ApplicationLogLevel: ERROR
