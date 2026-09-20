@@ -9,6 +9,28 @@ import {
 
 export class SwaggerResponseBuilder {
 
+  /**
+   * Retorna la fecha/hora actual en zona horaria America/Bogota (UTC-5)
+   * Formato: YYYY-MM-DDTHH:mm:ss.sss-05:00
+   */
+  private static getBogotaTimestamp(): string {
+    const now = new Date();
+
+    // Convertir a zona horaria America/Bogota (UTC-5)
+    const bogotaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+
+    // Formatear manualmente a ISO-like con offset -05:00
+    const year = bogotaTime.getFullYear();
+    const month = String(bogotaTime.getMonth() + 1).padStart(2, '0');
+    const day = String(bogotaTime.getDate()).padStart(2, '0');
+    const hours = String(bogotaTime.getHours()).padStart(2, '0');
+    const minutes = String(bogotaTime.getMinutes()).padStart(2, '0');
+    const seconds = String(bogotaTime.getSeconds()).padStart(2, '0');
+    const ms = String(bogotaTime.getMilliseconds()).padStart(3, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}-05:00`;
+  }
+
   static buildSuccessResponse<T>(
     statusCode: number,
     data: T,
@@ -23,7 +45,7 @@ export class SwaggerResponseBuilder {
       httpStatusCode: statusCode,
       httpStatusDesc: this.getStatusDescription(statusCode),
       messageUuid,
-      requestDatetime: new Date().toISOString(),
+      requestDatetime: this.getBogotaTimestamp(),
       requestAppId
     };
 
@@ -56,7 +78,7 @@ export class SwaggerResponseBuilder {
       httpStatusCode: statusCode,
       httpStatusDesc: this.getStatusDescription(statusCode),
       messageUuid,
-      requestDatetime: new Date().toISOString(),
+      requestDatetime: this.getBogotaTimestamp(),
       requestAppId
     };
 
@@ -83,7 +105,7 @@ export class SwaggerResponseBuilder {
       httpStatusCode: statusCode,
       httpStatusDesc: this.getStatusDescription(statusCode),
       messageUuid,
-      requestDatetime: new Date().toISOString(),
+      requestDatetime: this.getBogotaTimestamp(),
       requestAppId
     };
 
