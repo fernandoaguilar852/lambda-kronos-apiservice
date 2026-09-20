@@ -156,6 +156,24 @@ export const lambdaHandler = async (
             return response;
         }
 
+        // ── Validaciones de permisos para endpoints GET /v1/fsm/external/* ────
+        // Solo usuarios con rol COMPANY_ADMIN o SUPER_ADMIN pueden consultar
+        if (method === 'GET' && path.startsWith('/v1/fsm/external/')) {
+            // Validación 1: Rol debe ser COMPANY_ADMIN o SUPER_ADMIN
+            if (jwtPayload.role !== 'COMPANY_ADMIN' && jwtPayload.role !== 'SUPER_ADMIN') {
+                const response = errorResp(403, requestId, requestAppId, 'No tiene el usuario correcto para poder realizar la consulta');
+                logApiUsage(repository, event, response, startTime, companyId, userId);
+                return response;
+            }
+
+            // Validación 2: usedApi debe ser true
+            if (!jwtPayload.usedApi) {
+                const response = errorResp(403, requestId, requestAppId, 'No tiene los permisos para consultar la API, comuníquese con el proveedor del servicio');
+                logApiUsage(repository, event, response, startTime, companyId, userId);
+                return response;
+            }
+        }
+
         // ── GET /v1/fsm/external/work-orders ──────────────────────────────────
         // Ruta PROTEGIDA — requiere JWT + query params pageNumber y pageSize OBLIGATORIOS
         if (method === 'GET' && path === '/v1/fsm/external/work-orders') {
